@@ -1,0 +1,21 @@
+"""
+HealthGuard DB — config.py
+MySQL database configuration
+"""
+
+class Config:
+    # Secret key for session management
+    SECRET_KEY = 'healthguard_secret_2025'
+
+    # ── MySQL Configuration ───────────────────────
+    # Change these values to match your MySQL setup
+    MYSQL_HOST     = 'localhost'
+    MYSQL_USER     = 'root'
+    MYSQL_PASSWORD = ''          # Enter your MySQL password here
+    MYSQL_DB       = 'healthguard'
+
+    SQLALCHEMY_DATABASE_URI = (
+        f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}"
+        f"@{MYSQL_HOST}/{MYSQL_DB}"
+    )
+    SQLALCHEMY_TRACK_MODIFICATIONS = False

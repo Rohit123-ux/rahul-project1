@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}History — HealthGuard{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:4px;">📋 All Health Checks</h1>
+    <p style="color:var(--muted);font-size:13px;">{{ predictions|length }} total checks recorded</p>
+  </div>
+  <a href="/predict" class="btn btn-primary">🔬 New Check</a>
+</div>
+
+<div class="card">
+{% if predictions %}
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date & Time</th>
+        <th>❤️ Heart</th>
+        <th>🩸 Diabetes</th>
+        <th>🫘 Kidney</th>
+        <th>Overall</th>
+        <th>Status</th>
+        <th>Report</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in predictions %}
+      <tr>
+        <td style="color:var(--muted);">{{ loop.index }}</td>
+        <td style="color:var(--muted);white-space:nowrap;">{{ p.created_at.strftime('%d %b %Y') }}<br>
+          <span style="font-size:11px;">{{ p.created_at.strftime('%I:%M %p') }}</span></td>
+        <td>
+          <span style="font-weight:700;color:var(--heart);">{{ p.heart_risk|round(1) }}%</span><br>
+          <span class="badge badge-{{ 'high' if 'High' in p.heart_level else 'mod' if 'Moderate' in p.heart_level else 'low' }}" style="font-size:9px;">{{ p.heart_level.split()[0] }}</span>
+        </td>
+        <td>
+          <span style="font-weight:700;color:var(--diabetes);">{{ p.diabetes_risk|round(1) }}%</span><br>
+          <span class="badge badge-{{ 'high' if 'High' in p.diabetes_level else 'mod' if 'Moderate' in p.diabetes_level else 'low' }}" style="font-size:9px;">{{ p.diabetes_level.split()[0] }}</span>
+        </td>
+        <td>
+          <span style="font-weight:700;color:var(--kidney);">{{ p.kidney_risk|round(1) }}%</span><br>
+          <span class="badge badge-{{ 'high' if 'High' in p.kidney_level else 'mod' if 'Moderate' in p.kidney_level else 'low' }}" style="font-size:9px;">{{ p.kidney_level.split()[0] }}</span>
+        </td>
+        <td>
+          <span style="font-family:'DM Serif Display',serif;font-size:18px;
+            color:{{ '#22c55e' if p.overall_score>=75 else '#f97316' if p.overall_score>=50 else '#ef4444' }};">
+            {{ p.overall_score }}/100
+          </span>
+        </td>
+        <td>
+          <span style="font-size:12px;color:{{ '#22c55e' if p.overall_score>=75 else '#f97316' if p.overall_score>=50 else '#ef4444' }};">
+            {{ p.overall_status }}
+          </span>
+        </td>
+        <td><a href="/download_report/{{ p.id }}" class="btn btn-outline btn-sm">📄 PDF</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div style="text-align:center;padding:60px;color:var(--muted);">
+  <div style="font-size:48px;margin-bottom:12px;opacity:.3;">📋</div>
+  <p>No health checks yet.</p>
+  <a href="/predict" class="btn btn-primary" style="margin-top:16px;">Start First Check</a>
+</div>
+{% endif %}
+</div>
+{% endblock %}

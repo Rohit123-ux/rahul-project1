@@ -1,0 +1,131 @@
+<!-- predict.html -->
+{% extends 'base.html' %}
+{% block title %}New Health Check — HealthGuard{% endblock %}
+{% block content %}
+<div style="max-width:800px;margin:0 auto;">
+<div style="margin-bottom:24px;">
+  <h1 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:4px;">🔬 New Health Check</h1>
+  <p style="color:var(--muted);font-size:13px;">Fill in your health parameters to get 3 disease risk predictions</p>
+</div>
+<div class="card">
+<form method="POST">
+  <div style="font-size:10.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;">Personal Info</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Age (years)</label>
+      <input type="number" name="age" value="{{ patient.age or '' }}" placeholder="e.g. 45" min="1" max="120" required/>
+    </div>
+    <div class="form-group">
+      <label>Sex</label>
+      <select name="sex" required>
+        <option value="" disabled selected>Select</option>
+        <option value="1" {% if patient.sex=='Male' %}selected{% endif %}>Male</option>
+        <option value="0" {% if patient.sex=='Female' %}selected{% endif %}>Female</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="font-size:10.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:20px 0 12px;">Cardiac Parameters</div>
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Chest Pain Type</label>
+      <select name="cp" required>
+        <option value="" disabled selected>Select type</option>
+        <option value="0">0 — Typical Angina</option>
+        <option value="1">1 — Atypical Angina</option>
+        <option value="2">2 — Non-anginal Pain</option>
+        <option value="3">3 — Asymptomatic</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Max Heart Rate (bpm)</label>
+      <input type="number" name="thalach" placeholder="e.g. 150" min="60" max="220" required/>
+      <div class="hint">Range: 60 – 220</div>
+    </div>
+    <div class="form-group">
+      <label>Exercise Induced Angina</label>
+      <select name="exang">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>ST Depression (oldpeak)</label>
+      <input type="number" name="oldpeak" placeholder="e.g. 1.0" min="0" max="10" step="0.1" value="1.0"/>
+      <div class="hint">Range: 0 – 10</div>
+    </div>
+  </div>
+
+  <div style="font-size:10.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:20px 0 12px;">Blood Reports & Vitals</div>
+  <div class="form-grid form-grid3">
+    <div class="form-group">
+      <label>Blood Pressure (mm Hg)</label>
+      <input type="number" name="trestbps" placeholder="e.g. 120" min="60" max="200" required/>
+    </div>
+    <div class="form-group">
+      <label>Cholesterol (mg/dl)</label>
+      <input type="number" name="chol" placeholder="e.g. 200" min="100" max="600" required/>
+    </div>
+    <div class="form-group">
+      <label>Fasting Blood Sugar (mg/dl)</label>
+      <input type="number" name="fasting_sugar" placeholder="e.g. 100" min="50" max="500" required/>
+    </div>
+    <div class="form-group">
+      <label>Blood Glucose (mg/dl)</label>
+      <input type="number" name="glucose" placeholder="e.g. 110" min="50" max="500" required/>
+    </div>
+    <div class="form-group">
+      <label>Insulin (mu U/ml)</label>
+      <input type="number" name="insulin" placeholder="e.g. 80" min="0" max="900" value="125"/>
+    </div>
+    <div class="form-group">
+      <label>Hemoglobin (g/dl)</label>
+      <input type="number" name="hemo" placeholder="e.g. 13.5" min="3" max="20" step="0.1" required/>
+    </div>
+    <div class="form-group">
+      <label>Serum Creatinine (mg/dl)</label>
+      <input type="number" name="sc" placeholder="e.g. 1.2" min="0.1" max="20" step="0.1" required/>
+    </div>
+    <div class="form-group">
+      <label>BMI (kg/m²)</label>
+      <input type="number" name="bmi" placeholder="e.g. 24.5" min="10" max="60" step="0.1" required/>
+    </div>
+    <div class="form-group">
+      <label>Pregnancies (0 if male)</label>
+      <input type="number" name="pregnancies" placeholder="0" min="0" max="20" value="0"/>
+    </div>
+  </div>
+
+  <div style="margin-top:24px;">
+    <button type="submit" class="btn btn-primary btn-full" style="padding:14px;">
+      🔬 Analyse Health Risk
+    </button>
+  </div>
+
+  <!-- Quick Fill -->
+  <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+    <div style="font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Quick Fill Samples</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="fill('healthy')">✅ Healthy</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="fill('heart')">❤️ Heart Risk</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="fill('diabetic')">🩸 Diabetic</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="fill('kidney')">🫘 Kidney Risk</button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="fill('highrisk')">⚠️ High Risk</button>
+    </div>
+  </div>
+</form>
+</div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const S={
+  healthy:{age:28,sex:1,cp:0,thalach:175,exang:0,oldpeak:0.5,trestbps:110,chol:170,fasting_sugar:85,glucose:90,insulin:60,hemo:14.5,sc:0.9,bmi:22.5,pregnancies:0},
+  heart:{age:63,sex:1,cp:3,thalach:105,exang:1,oldpeak:3.5,trestbps:150,chol:295,fasting_sugar:190,glucose:150,insulin:85,hemo:13.0,sc:1.1,bmi:28.4,pregnancies:0},
+  diabetic:{age:50,sex:0,cp:1,thalach:140,exang:0,oldpeak:1.0,trestbps:130,chol:210,fasting_sugar:190,glucose:185,insulin:280,hemo:12.5,sc:1.0,bmi:33.2,pregnancies:5},
+  kidney:{age:55,sex:1,cp:2,thalach:130,exang:0,oldpeak:1.5,trestbps:145,chol:240,fasting_sugar:145,glucose:140,insulin:90,hemo:8.5,sc:6.5,bmi:26.1,pregnancies:0},
+  highrisk:{age:68,sex:1,cp:3,thalach:98,exang:1,oldpeak:4.0,trestbps:170,chol:320,fasting_sugar:215,glucose:210,insulin:310,hemo:9.2,sc:5.8,bmi:35.0,pregnancies:0},
+};
+function fill(t){const d=S[t];Object.keys(d).forEach(k=>{const e=document.querySelector(`[name="${k}"]`);if(e)e.value=d[k];});}
+</script>
+{% endblock %}

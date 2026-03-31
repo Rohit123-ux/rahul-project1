@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Dashboard — HealthGuard{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+  <div>
+    <h1 style="font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:4px;">
+      🏥 Doctor Dashboard
+    </h1>
+    <p style="color:var(--muted);font-size:13px;">{{ current_user.name }} — Patient Overview</p>
+  </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="stats-grid">
+  <div class="stat-card total">
+    <div class="stat-label">Total Patients</div>
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-sub">Registered</div>
+  </div>
+  <div class="stat-card high">
+    <div class="stat-label">🔴 High Risk</div>
+    <div class="stat-value" style="color:var(--danger);">{{ high_risk }}</div>
+    <div class="stat-sub">Need attention</div>
+  </div>
+  <div class="stat-card moderate">
+    <div class="stat-label">🟡 Moderate</div>
+    <div class="stat-value" style="color:var(--orange);">{{ moderate_risk }}</div>
+    <div class="stat-sub">Monitor closely</div>
+  </div>
+  <div class="stat-card low">
+    <div class="stat-label">🟢 Low Risk</div>
+    <div class="stat-value" style="color:var(--green);">{{ low_risk }}</div>
+    <div class="stat-sub">Healthy patients</div>
+  </div>
+</div>
+
+<!-- PATIENT TABLE -->
+<div class="card" style="margin-bottom:24px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div class="section-title" style="margin-bottom:0;">👥 All Patients</div>
+    <input type="text" id="searchInput" placeholder="🔍 Search patient..."
+      style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+      padding:7px 12px;color:var(--text);font-size:13px;outline:none;width:220px;"
+      onkeyup="filterTable()"/>
+  </div>
+
+  {% if patient_data %}
+  <div class="table-wrap">
+    <table id="patientTable">
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Age/Sex</th>
+          <th>❤️ Heart</th>
+          <th>🩸 Diabetes</th>
+          <th>🫘 Kidney</th>
+          <th>Score</th>
+          <th>Risk</th>
+          <th>Last Check</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pd in patient_data %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:30px;height:30px;border-radius:50%;
+                background:linear-gradient(135deg,#ff4d6d,#818cf8);
+                display:flex;align-items:center;justify-content:center;
+                font-size:12px;font-weight:700;color:white;">
+                {{ pd.patient.name[0].upper() }}
+              </div>
+              <div>
+                <div style="font-size:13px;font-weight:500;">{{ pd.patient.name }}</div>
+                <div style="font-size:11px;color:var(--muted);">{{ pd.patient.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td style="color:var(--muted);">
+            {{ pd.patient.age or '—' }}y / {{ pd.patient.sex or '—' }}
+          </td>
+          {% if pd.latest %}
+          <td><span style="font-weight:600;color:var(--heart);">{{ pd.latest.heart_risk|round(1) }}%</span></td>
+          <td><span style="font-weight:600;color:var(--diabetes);">{{ pd.latest.diabetes_risk|round(1) }}%</span></td>
+          <td><span style="font-weight:600;color:var(--kidney);">{{ pd.latest.kidney_risk|round(1) }}%</span></td>
+          <td>
+            <span style="font-family:'DM Serif Display',serif;font-size:16px;
+              color:{{ '#22c55e' if pd.latest.overall_score>=75 else '#f97316' if pd.latest.overall_score>=50 else '#ef4444' }};">
+              {{ pd.latest.overall_score }}/100
+            </span>
+          </td>
+          <td>
+            <span class="badge badge-{{ 'high' if pd.risk_cat=='High Risk' else 'mod' if pd.risk_cat=='Moderate' else 'low' if pd.risk_cat=='Low Risk' else 'nodata' }}">
+              {{ pd.risk_cat }}
+            </span>
+          </td>
+          <td style="color:var(--muted);font-size:12px;">
+            {{ pd.latest.created_at.strftime('%d %b %Y') }}
+          </td>
+          {% else %}
+          <td colspan="5" style="color:var(--muted);font-size:12px;">No checks yet</td>
+          <td><span class="badge badge-nodata">No Data</span></td>
+          <td style="color:var(--muted);font-size:12px;">—</td>
+          {% endif %}
+          <td>
+            <a href="/doctor/patient/{{ pd.patient.id }}" class="btn btn-outline btn-sm">👁️ View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:60px;color:var(--muted);">
+    <div style="font-size:48px;margin-bottom:12px;opacity:.3;">👥</div>
+    <p>No patients registered yet.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- RECENT ACTIVITY -->
+<div class="card">
+  <div class="section-title">🕐 Recent Activity</div>
+  {% for p in recent_preds %}
+  <div style="display:flex;align-items:center;justify-content:space-between;
+    padding:10px 0;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:18px;">📋</span>
+      <div>
+        <div style="font-size:13px;font-weight:500;">{{ p.patient.name }}</div>
+        <div style="font-size:11px;color:var(--muted);">
+          Heart: {{ p.heart_risk|round(1) }}% · Diabetes: {{ p.diabetes_risk|round(1) }}% · Kidney: {{ p.kidney_risk|round(1) }}%
+        </div>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:12px;color:var(--muted);">{{ p.created_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+      <a href="/download_report/{{ p.id }}" class="btn btn-outline btn-sm" style="margin-top:4px;">📄 PDF</a>
+    </div>
+  </div>
+  {% else %}
+  <p style="color:var(--muted);font-size:13px;">No recent activity.</p>
+  {% endfor %}
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function filterTable() {
+  const input = document.getElementById('searchInput').value.toLowerCase();
+  const rows  = document.querySelectorAll('#patientTable tbody tr');
+  rows.forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(input) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}{{ patient.name }} — HealthGuard{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <a href="/doctor" class="btn btn-outline btn-sm">← Back</a>
+    <div>
+      <h1 style="font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:2px;">{{ patient.name }}</h1>
+      <p style="color:var(--muted);font-size:13px;">
+        {{ patient.age or '—' }} years · {{ patient.sex or '—' }} · {{ patient.blood_group or '—' }} · {{ patient.mobile or '—' }}
+      </p>
+    </div>
+  </div>
+  {% if latest %}
+  <a href="/download_report/{{ latest.id }}" class="btn btn-primary">📄 Latest Report</a>
+  {% endif %}
+</div>
+
+<!-- LATEST STATS -->
+{% if latest %}
+<div class="stats-grid" style="margin-bottom:24px;">
+  <div class="stat-card heart">
+    <div class="stat-label">❤️ Heart Risk</div>
+    <div class="stat-value" style="color:var(--heart);">{{ latest.heart_risk|round(1) }}%</div>
+    <div class="stat-sub"><span class="badge badge-{{ 'high' if 'High' in latest.heart_level else 'mod' if 'Moderate' in latest.heart_level else 'low' }}">{{ latest.heart_level }}</span></div>
+  </div>
+  <div class="stat-card diabetes">
+    <div class="stat-label">🩸 Diabetes Risk</div>
+    <div class="stat-value" style="color:var(--diabetes);">{{ latest.diabetes_risk|round(1) }}%</div>
+    <div class="stat-sub"><span class="badge badge-{{ 'high' if 'High' in latest.diabetes_level else 'mod' if 'Moderate' in latest.diabetes_level else 'low' }}">{{ latest.diabetes_level }}</span></div>
+  </div>
+  <div class="stat-card kidney">
+    <div class="stat-label">🫘 Kidney Risk</div>
+    <div class="stat-value" style="color:var(--kidney);">{{ latest.kidney_risk|round(1) }}%</div>
+    <div class="stat-sub"><span class="badge badge-{{ 'high' if 'High' in latest.kidney_level else 'mod' if 'Moderate' in latest.kidney_level else 'low' }}">{{ latest.kidney_level }}</span></div>
+  </div>
+  <div class="stat-card score">
+    <div class="stat-label">⭐ Health Score</div>
+    <div class="stat-value" style="color:var(--accent);">{{ latest.overall_score }}/100</div>
+    <div class="stat-sub">{{ latest.overall_status }}</div>
+  </div>
+</div>
+
+<!-- TREND CHART -->
+{% if predictions|length > 1 %}
+<div class="card" style="margin-bottom:24px;">
+  <div class="section-title">📈 Risk Trend</div>
+  <canvas id="trendChart" height="80"></canvas>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- HISTORY TABLE -->
+<div class="card">
+  <div class="section-title">📋 All Health Checks ({{ predictions|length }})</div>
+  {% if predictions %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Date</th><th>❤️ Heart</th><th>🩸 Diabetes</th><th>🫘 Kidney</th><th>Score</th><th>Report</th></tr>
+      </thead>
+      <tbody>
+        {% for p in predictions %}
+        <tr>
+          <td style="color:var(--muted);font-size:12px;">{{ p.created_at.strftime('%d %b %Y, %I:%M %p') }}</td>
+          <td><span style="font-weight:600;color:var(--heart);">{{ p.heart_risk|round(1) }}%</span></td>
+          <td><span style="font-weight:600;color:var(--diabetes);">{{ p.diabetes_risk|round(1) }}%</span></td>
+          <td><span style="font-weight:600;color:var(--kidney);">{{ p.kidney_risk|round(1) }}%</span></td>
+          <td><span style="font-family:'DM Serif Display',serif;font-size:16px;
+            color:{{ '#22c55e' if p.overall_score>=75 else '#f97316' if p.overall_score>=50 else '#ef4444' }};">
+            {{ p.overall_score }}/100</span></td>
+          <td><a href="/download_report/{{ p.id }}" class="btn btn-outline btn-sm">📄 PDF</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p style="color:var(--muted);">No health checks recorded yet.</p>
+  {% endif %}
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+{% if predictions|length > 1 %}
+const ctx = document.getElementById('trendChart');
+new Chart(ctx, {
+  type:'line',
+  data:{
+    labels:{{ chart_labels|safe }},
+    datasets:[
+      {label:'❤️ Heart',data:{{ chart_heart|safe }},borderColor:'#ff4d6d',backgroundColor:'rgba(255,77,109,.1)',tension:.4,fill:true,pointRadius:4},
+      {label:'🩸 Diabetes',data:{{ chart_diab|safe }},borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',tension:.4,fill:true,pointRadius:4},
+      {label:'🫘 Kidney',data:{{ chart_kidney|safe }},borderColor:'#22d3ee',backgroundColor:'rgba(34,211,238,.1)',tension:.4,fill:true,pointRadius:4},
+    ]
+  },
+  options:{
+    responsive:true,
+    plugins:{legend:{labels:{color:'#e8edf5',font:{size:12}}}},
+    scales:{
+      y:{min:0,max:100,grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#6b7a99'}},
+      x:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#6b7a99'}}
+    }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}
